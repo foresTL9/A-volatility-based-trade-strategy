@@ -8,21 +8,21 @@ import time
 import matplotlib.pyplot as plt
 from math import *
 
-vics = 2850
+vics = 2700
 
-mfuture = xlrd.open_workbook(u'/Zoom_2.xls').sheets()[0]
-moption = xlrd.open_workbook(u'/Moption price_'+str(vics)+'.xlsx').sheets()[0]
-dayvdata = xlrd.open_workbook(u'/dayvolmonths.xlsx').sheets()[0]
+mfuture = xlrd.open_workbook(u'Zoom_2.xls').sheets()[0]
+moption = xlrd.open_workbook(u'Moption price_'+str(vics)+'.xlsx').sheets()[0]
+dayvdata = xlrd.open_workbook(u'dayvolmonths.xlsx').sheets()[0]
 n1 = 4
 n2 = 6
 taryield = 0.01
 
 
 
+
+
 def my_std(inplist, days):
     return [0 for i in range(days)]+[np.std(inplist[i:i+days], ddof = 1) for i in range(len(inplist)-days+1)]
-
-
 
 def my_norm(inp):
     return np.exp(-inp*inp/2)/math.sqrt(2*3.141592653)
@@ -49,14 +49,16 @@ t_date = np.array(mfuture.col_values(0)[1:])
 
 price_st = np.array(dayvdata.col_values(1)[1:])
 price_low = np.array(dayvdata.col_values(2)[1:])
-tau = np.array(dayvdata.col_values(4)[1:])/60
+tau = np.array(dayvdata.col_values(4)[1:])/30
 day_vol = np.log(price_st/price_low)*np.log(price_st/price_low)/(4*np.log(2))
 
 
 
 
-vol30 = np.array(mfuture.col_values(5)[1:])
-delta, vega = calc_vega(price_fut,price_st,vol30,tau)
+vol30 = np.array(mfuture.col_values(4)[1:])
+impvol = np.sqrt(2*math.pi/tau)*1/(price_fut+int(vics))*(price_op-(price_fut-int(vics))/2+np.sqrt((price_op-(price_fut-int(vics))/2)*(price_op-(price_fut-int(vics))/2)-(price_fut-int(vics))*(price_fut-int(vics))/math.pi))
+impvol1 = np.sqrt(2*math.pi/tau)*price_op/price_fut
+delta, vega = calc_vega(price_fut,impvol1,impvol,tau)
 sigma = vega*day_vol
 
 
@@ -101,5 +103,7 @@ for i in range(0, len(vega)):
     sheet1.write(i+1,6,day_vol[i])
     sheet1.write(i+1,7,sigv1[i])
     sheet1.write(i+1,8,sigv2[i])
-output.save('/fm_c'+str(vics)+'vvol.xls')
+    sheet1.write(i+1,9,impvol1[i])
+    sheet1.write(i+1,10,vol30[i])
+output.save('fm_c'+str(vics)+'1vol.xls')
 
